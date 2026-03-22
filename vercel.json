@@ -8,7 +8,6 @@
     "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase_anon_key",
     "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
     "ANTHROPIC_API_KEY": "@anthropic_api_key",
-    "RAKUTEN_APPLICATION_ID": "@rakuten_application_id",
-    "NEXT_PUBLIC_APP_URL": "@app_url"
+    "RAKUTEN_APPLICATION_ID": "@rakuten_application_id"
   }
 }
