@@ -9,21 +9,24 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const supabase = createClient();
-    const code = new URLSearchParams(window.location.search).get('code');
 
-    if (!code) {
-      router.replace('/login?error=no_code');
-      return;
-    }
-
-    supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-      if (error) {
-        console.error('[auth/callback] exchangeCodeForSession error:', error.message);
-        router.replace('/login?error=auth_failed');
-      } else {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
         router.replace('/dashboard');
       }
     });
+
+    // Fallback: if auth doesn't complete within 5 seconds, redirect to login
+    const timeout = setTimeout(() => {
+      router.replace('/login?error=auth_timeout');
+    }, 5000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, [router]);
 
   return (
