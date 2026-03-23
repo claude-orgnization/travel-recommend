@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Destination } from '@/src/types';
 import type { HotelSearchResult } from '@/src/lib/rakuten/hotels';
 import { getAreaCode, PREFECTURE_AREAS } from '@/src/lib/rakuten/areaCodeMap';
-import type { SubArea } from '@/src/lib/rakuten/areaCodeMap';
+import type { SubArea, PrefectureArea } from '@/src/lib/rakuten/areaCodeMap';
 import { HotelCard } from './HotelCard';
 
 interface HotelSearchSectionProps {
@@ -26,6 +26,18 @@ function getTomorrowStr(): string {
 // 地方でグルーピングした選択肢を生成
 const REGION_ORDER = ['北海道', '東北', '関東', '甲信越', '北陸', '東海', '近畿', '中国', '四国', '九州', '沖縄'];
 
+// 都道府県 → 地方のマッピング
+const PREF_REGION_MAP: Record<string, string> = {};
+for (const p of PREFECTURE_AREAS) {
+  PREF_REGION_MAP[p.middleClassCode] = p.region;
+}
+
+interface ApiPrefecture {
+  label: string;
+  middleClassCode: string;
+  subAreas: SubArea[];
+}
+
 export function HotelSearchSection({
   destinations,
   adultNum,
@@ -41,12 +53,36 @@ export function HotelSearchSection({
   const [result, setResult] = useState<HotelSearchResult | null>(null);
   const [searched, setSearched] = useState(false);
 
+  // APIから取得した地区コードデータ（取得できなければハードコードを使用）
+  const [apiAreas, setApiAreas] = useState<PrefectureArea[] | null>(null);
+
+  // 地区コードをAPIから取得
+  useEffect(() => {
+    fetch('/api/areas')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.prefectures?.length > 0) {
+          // APIデータに region を付与
+          const enriched: PrefectureArea[] = data.prefectures.map((p: ApiPrefecture) => ({
+            ...p,
+            region: PREF_REGION_MAP[p.middleClassCode] ?? '他',
+          }));
+          setApiAreas(enriched);
+        }
+      })
+      .catch(() => {
+        // フォールバック: ハードコードのデータを使用
+      });
+  }, []);
+
+  const prefectureAreas = apiAreas ?? PREFECTURE_AREAS;
+
   // 選択中の都道府県に対応するサブエリア一覧
   const subAreas: SubArea[] = useMemo(() => {
     if (!middleClassCode) return [];
-    const pref = PREFECTURE_AREAS.find((p) => p.middleClassCode === middleClassCode);
+    const pref = prefectureAreas.find((p) => p.middleClassCode === middleClassCode);
     return pref?.subAreas ?? [];
-  }, [middleClassCode]);
+  }, [middleClassCode, prefectureAreas]);
 
   // 目的地が変わったらエリアコードを自動推定
   useEffect(() => {
@@ -64,11 +100,11 @@ export function HotelSearchSection({
   }, [selectedDestIndex, destinations]);
 
   // 都道府県が変わったらサブエリアをリセット
-  function handlePrefChange(newMiddle: string) {
+  const handlePrefChange = useCallback((newMiddle: string) => {
     setMiddleClassCode(newMiddle);
-    const pref = PREFECTURE_AREAS.find((p) => p.middleClassCode === newMiddle);
+    const pref = prefectureAreas.find((p) => p.middleClassCode === newMiddle);
     setSmallClassCode(pref?.subAreas[0]?.smallClassCode ?? '');
-  }
+  }, [prefectureAreas]);
 
   async function handleSearch() {
     if (!middleClassCode || !smallClassCode) {
@@ -116,6 +152,15 @@ export function HotelSearchSection({
     }
   }
 
+  // 地方ごとにグルーピングされた選択肢
+  const regionGroups = useMemo(() => {
+    const allRegions = [...new Set(prefectureAreas.map((p) => p.region))];
+    // REGION_ORDERの順に並べ、含まれないものは末尾に
+    const ordered = REGION_ORDER.filter((r) => allRegions.includes(r));
+    const extra = allRegions.filter((r) => !REGION_ORDER.includes(r));
+    return [...ordered, ...extra];
+  }, [prefectureAreas]);
+
   return (
     <section aria-label="ホテル検索" className="space-y-4">
       <h2 className="text-base font-semibold text-[var(--color-neutral-700)]">
@@ -155,9 +200,9 @@ export function HotelSearchSection({
               className="w-full border border-[var(--border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)]"
             >
               <option value="">都道府県を選択</option>
-              {REGION_ORDER.map((region) => (
+              {regionGroups.map((region) => (
                 <optgroup key={region} label={region}>
-                  {PREFECTURE_AREAS.filter((p) => p.region === region).map((p) => (
+                  {prefectureAreas.filter((p) => p.region === region).map((p) => (
                     <option key={p.middleClassCode} value={p.middleClassCode}>
                       {p.label}
                     </option>

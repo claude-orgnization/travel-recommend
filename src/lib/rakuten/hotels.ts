@@ -125,6 +125,10 @@ export async function searchHotels(
   }
 
   if (!response.ok) {
+    // 404 = 該当データなし（エリアコード不一致 or 条件に合うホテルなし）
+    if (response.status === 404) {
+      return { hotels: [], totalCount: 0 };
+    }
     let detail = '';
     try {
       const body = await response.json();
