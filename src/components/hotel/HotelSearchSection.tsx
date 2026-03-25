@@ -6,6 +6,7 @@ import type { HotelSearchResult } from '@/src/lib/rakuten/hotels';
 import { getAreaCode, PREFECTURE_AREAS } from '@/src/lib/rakuten/areaCodeMap';
 import type { SubArea } from '@/src/lib/rakuten/areaCodeMap';
 import { HotelCard } from './HotelCard';
+import { DateRangePicker } from './DateRangePicker';
 
 interface HotelSearchSectionProps {
   destinations: Destination[];
@@ -193,33 +194,19 @@ export function HotelSearchSection({
             </select>
           </div>
 
-          {/* チェックイン */}
-          <div>
-            <label htmlFor="hotel-checkin" className="block text-sm font-medium mb-1">
-              チェックイン <span aria-hidden="true" className="text-red-500">*</span>
+          {/* チェックイン・チェックアウト（期間選択） */}
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium mb-1">
+              宿泊期間 <span aria-hidden="true" className="text-red-500">*</span>
             </label>
-            <input
-              id="hotel-checkin"
-              type="date"
-              value={checkinDate}
-              min={getTodayStr()}
-              onChange={(e) => setCheckinDate(e.target.value)}
-              className="w-full border border-[var(--border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)]"
-            />
-          </div>
-
-          {/* チェックアウト */}
-          <div>
-            <label htmlFor="hotel-checkout" className="block text-sm font-medium mb-1">
-              チェックアウト <span aria-hidden="true" className="text-red-500">*</span>
-            </label>
-            <input
-              id="hotel-checkout"
-              type="date"
-              value={checkoutDate}
-              min={checkinDate || getTodayStr()}
-              onChange={(e) => setCheckoutDate(e.target.value)}
-              className="w-full border border-[var(--border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)]"
+            <DateRangePicker
+              startDate={checkinDate}
+              endDate={checkoutDate}
+              minDate={getTodayStr()}
+              onChangeRange={(start, end) => {
+                setCheckinDate(start);
+                setCheckoutDate(end);
+              }}
             />
           </div>
         </div>
