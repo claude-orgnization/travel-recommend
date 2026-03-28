@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import type { SavedProposal } from '@/src/types';
+import BudgetEstimate from '@/src/components/budget/BudgetEstimate';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -153,6 +154,9 @@ export default function SavedDetailPage({ params }: Props) {
 
         <p className="text-xs italic text-[var(--color-neutral-700)]">{dest.tips}</p>
       </section>
+
+      {/* Budget estimate section */}
+      <BudgetEstimate destination={dest} />
 
       {/* Memo section */}
       <section aria-label="メモ" className="border border-[var(--border)] rounded-xl p-4">
