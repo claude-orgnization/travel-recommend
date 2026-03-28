@@ -131,6 +131,36 @@ export interface ApiError {
 }
 
 // ============================================================
+// Budget Estimate Types — 旅行予算見積もり
+// ============================================================
+
+/** 予算カテゴリ別の見積もり */
+export interface BudgetCategory {
+  category: string;            // カテゴリ名（例: 交通費、宿泊費）
+  estimatedMin: number;        // 最小見積もり（円）
+  estimatedMax: number;        // 最大見積もり（円）
+  note: string;                // 補足説明
+}
+
+/** 予算見積もりレスポンス */
+export interface BudgetEstimateResponse {
+  totalMin: number;            // 合計最小（円）
+  totalMax: number;            // 合計最大（円）
+  categories: BudgetCategory[];
+  advice: string;              // 節約のコツ等
+}
+
+/** 予算見積もりリクエスト */
+export interface BudgetEstimateRequest {
+  destination: string;         // 旅行先名
+  familyProfile: FamilyProfile;
+  season: TripCondition['season'];
+  style: TripCondition['style'];
+  area: TripCondition['area'];
+  nights: number;              // 宿泊数
+}
+
+// ============================================================
 // Hearing Types — インタラクティブ・ヒアリング
 // ============================================================
 
